@@ -196,7 +196,7 @@ function uploadFile() {
         .catch(error => console.error('Error:', error));
 };
 function populateWorkspaceNames() {
-        const selectWorkspace = document.getElementById('selectWorkspace');
+    const selectWorkspace = document.getElementById('selectWorkspace');
 
     var requestOptions = {
         method: 'GET',
@@ -279,7 +279,6 @@ function getAllLayerList() {
     fetch("http://localhost:3000/geoserver/get-layers", requestOptions)
         .then(response => response.json())
         .then(data => {
-            debugger
             const layersNames = data.layer.map(layers => layers.name);
 
             layersNames.forEach(layerName => {
@@ -363,12 +362,12 @@ function selectLayerForAttribute(selectedValue) {
         .catch(error => console.log('error', error));
 };
 
-let chartData={};
-function onChangeChart(chartValue){
-    chartData.selectedChart=chartValue;
+let chartData = {};
+function onChangeChart(chartValue) {
+    chartData.selectedChart = chartValue;
 };
-function onChangeLayerChart(chartLayer){
-    chartData.chartLayer=chartLayer;
+function onChangeLayerChart(chartLayer) {
+    chartData.chartLayer = chartLayer;
     console.log(chartData)
 }
 
@@ -407,3 +406,83 @@ var pieChart = new Chart(pieChartCanvas, {
         },
     },
 });
+const container = document.getElementById('popup');
+const content = document.getElementById('popup-content');
+const closer = document.getElementById('popup-closer');
+const overlay = new ol.Overlay({
+    element: container,
+    autoPan: {
+        animation: {
+            duration: 250,
+        },
+    },
+});
+map.addOverlay(overlay);
+
+/**
+ * Add a click handler to hide the popup.
+ * @return {boolean} Don't follow the href.
+ */
+closer.onclick = function () {
+    overlay.setPosition(undefined);
+    closer.blur();
+    return false;
+};
+map.on('click', function (evt) {
+    const viewResolution = view.getResolution();
+
+    const wmsLayers = map.getLayers().getArray()
+        .filter(layer =>
+            layer instanceof ol.layer.Tile &&
+            layer.getSource() instanceof ol.source.TileWMS &&
+            layer.getVisible()
+        );
+
+    let popupContent = '<div>';
+
+    wmsLayers.forEach(wmsLayer => {
+        const wmsSource = wmsLayer.getSource();
+
+        const url = wmsSource.getFeatureInfoUrl(
+            evt.coordinate,
+            viewResolution,
+            'EPSG:4326',
+            { 'INFO_FORMAT': 'application/json' }
+        );
+
+        if (url) {
+            fetch(url)
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.features.length > 0) {
+                        const featureProperties = data.features[0].properties;
+                        const tableName = `table_${wmsLayer.get('title').replace(/\s+/g, '_')}`;
+                        
+                        // Create a table with feature properties
+                        popupContent += `<div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">`;
+                        popupContent += `<h3>${wmsLayer.get('title')}</h3>`;
+                        popupContent += `<table id="${tableName}"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>`;
+                        
+                        for (const property in featureProperties) {
+                            popupContent += `<tr><td>${property}</td><td>${featureProperties[property]}</td></tr>`;
+                        }
+
+                        popupContent += '</tbody></table>';
+                        popupContent += '</div>';
+                    }
+
+                    // Update the overlay content
+                    content.innerHTML = popupContent + '</div>';
+                debugger
+                    // Set the overlay position
+                    overlay.setPosition(evt.coordinate);
+                })
+                .catch((error) => {
+                    console.error(`Error fetching feature info for layer ${wmsLayer.get('title')}:`, error);
+                });
+        }
+    });
+});
+
+
+
