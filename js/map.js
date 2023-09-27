@@ -196,7 +196,7 @@ function uploadFile() {
         .catch(error => console.error('Error:', error));
 };
 function populateWorkspaceNames() {
-    const selectWorkspace = document.getElementById('selectWorkspace');
+        const selectWorkspace = document.getElementById('selectWorkspace');
 
     var requestOptions = {
         method: 'GET',
@@ -252,8 +252,24 @@ function populateDatastoreNames(workspaceName) {
 populateWorkspaceNames();
 const selectElement = document.getElementById("selectLayerForAttribute");
 const layersByWorkspace = {};
+
+function addOptionToSelect(selectElement, value, text) {
+    const optionElement = document.createElement("option");
+    optionElement.value = value;
+    optionElement.textContent = text;
+    selectElement.appendChild(optionElement);
+}
+
+function processLayers(workspace, layers, selectElement) {
+    layers.forEach(layer => {
+        const layerValue = `${workspace}:${layer.name}`;
+        const layerText = `${workspace} - ${layer.name}`;
+        addOptionToSelect(selectElement, layerValue, layerText);
+    });
+}
+
 function getAllLayerList() {
-    var requestOptions = {
+    const requestOptions = {
         method: 'GET',
         redirect: 'follow'
     };
@@ -262,26 +278,28 @@ function getAllLayerList() {
         .then(response => response.json())
         .then(data => {
             const layersNames = data.layer.map(layers => layers.name);
+
             layersNames.forEach(layerName => {
                 const [workspace, layer] = layerName.split(':');
                 addGeoServerWMSLayer(workspace, layer);
+
                 if (!layersByWorkspace[workspace]) {
                     layersByWorkspace[workspace] = [];
                 }
+
                 layersByWorkspace[workspace].push({ name: layer });
             });
+
             for (const workspace in layersByWorkspace) {
                 const layers = layersByWorkspace[workspace];
-                layers.forEach(layer => {
-                    const optionElement = document.createElement("option");
-                    optionElement.value = `${workspace}:${layer.name}`;
-                    optionElement.textContent = `${workspace} - ${layer.name}`;
-                    selectElement.appendChild(optionElement);
-                });
+
+                processLayers(workspace, layers, selectElements);
+                processLayers(workspace, layers, selectLayerForAttributeInTable);
             }
         })
-        .catch(error => console.log('error', error));
-};
+        .catch(error => console.error('error', error));
+}
+
 getAllLayerList();
 function addGeoServerWMSLayer(workspace, layerName) {
     if (workspace == 'gujarat_masterdb_workspace') return;
