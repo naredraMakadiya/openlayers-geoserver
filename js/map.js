@@ -250,7 +250,9 @@ function populateDatastoreNames(workspaceName) {
         .catch(error => console.log('error', error));
 };
 populateWorkspaceNames();
-const selectElement = document.getElementById("selectLayerForAttribute");
+var selectLayerForAttributeOption = document.getElementById("selectLayerForAttribute");
+var selectLayerForAttributeInTable = document.getElementById("selectLayerForAttributeInTable");
+
 const layersByWorkspace = {};
 
 function addOptionToSelect(selectElement, value, text) {
@@ -277,6 +279,7 @@ function getAllLayerList() {
     fetch("http://localhost:3000/geoserver/get-layers", requestOptions)
         .then(response => response.json())
         .then(data => {
+            debugger
             const layersNames = data.layer.map(layers => layers.name);
 
             layersNames.forEach(layerName => {
@@ -293,7 +296,7 @@ function getAllLayerList() {
             for (const workspace in layersByWorkspace) {
                 const layers = layersByWorkspace[workspace];
 
-                processLayers(workspace, layers, selectElements);
+                processLayers(workspace, layers, selectLayerForAttributeOption);
                 processLayers(workspace, layers, selectLayerForAttributeInTable);
             }
         })
