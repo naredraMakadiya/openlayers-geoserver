@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>WebGIS</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="./css/resources/datatable/datatable.css">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- OPENLAYERS -->
+  <link rel="stylesheet" href="./css/resources/ol/ol.css">
+  <link rel="stylesheet" href="/css/resources/ol/layerswitcher.css" />
+
+  <style>
+    #sidebar .list-unstyled li.active a {
+      background-color: dimgray;
+      /* Replace with the desired background color */
+      color: white;
+    }
+
+    /* CSS for the chart container */
+    /* CSS for the chart container */
+    .chart-container {
+      width: 100%;
+      max-width: 50%;
+      height: 400px;
+      float: left;
+      box-sizing: border-box;
+      padding: 10px;
+    }
+
+    /* Prevent scrolling within the container */
+    #dashboardContent {
+      overflow: hidden;
+    }
+
+    /* Prevent scrolling within the container */
+    #table {
+      max-height: 100vh;
+      /* Set a maximum height */
+      overflow: hidden;
+      display: none;
+      padding-left: 20px;
+      /* Add left padding */
+      padding-top: 50px;
+      /* Add top padding */
+    }
+
+    #geoserverSetup {
+      padding-top: 50px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper d-flex align-items-stretch">
+    <nav id="sidebar">
+      <div class="custom-menu">
+        <button type="button" id="sidebarCollapse" class="btn btn-primary">
+          <i class="fa fa-bars"></i>
+          <span class="sr-only">Toggle Menu</span>
+        </button>
+      </div>
+      <h1><a href="#" class="logo">WebGIS</a></h1>
+      <ul class="list-unstyled components mb-5">
+        <li class="active">
+          <a href="#" data-content="mapContent"><span class="fa fa-home mr-3"></span> Map</a>
+        </li>
+        <li>
+          <a href="#" data-content="dashboardContent"><span class="fa fa-user mr-3"></span> Dashboard</a>
+        </li>
+        <li>
+          <a href="#" data-content="table"><span class="fa fa-sticky-note mr-3"></span>Table</a>
+        </li>
+        <li>
+          <a href="#" data-content="geoserverSetup"><span class="fa fa-sticky-note mr-3"></span> Geoserver Setup</a>
+        </li>
+        <li>
+          <a href="#" data-content="settingsContent"><span class="fa fa-paper-plane mr-3"></span> Settings</a>
+        </li>
+        <li>
+          <a href="#" data-content="informationContent"><span class="fa fa-paper-plane mr-3"></span> Information</a>
+        </li>
+      </ul>
+    </nav>
+    <!-- Page Content  -->
+    <div id="content">
+      <div id="mapContent" style="width: 100%; height: 100%; padding: 0; min-height: 100vh;" class="content-section">
+      </div>
+      <div id="dashboardContent"
+        style="display: none; width: 100%; height: 100vh; padding: 0; max-height: 100%; min-height: 100%;"
+        class="content-section">
+        <div style="display: flex; margin: 45px; flex-direction: row;">
+          <div style="width: 300px;" class="form-group border p-3 mb-3">
+            <label for="selectChart">select Chart</label>
+            <select class="form-control" onchange="onChangeChart(this.value)" id="selectChart">
+              <option value="select">select</option>
+              <option value="pieChart">pieChart</option>
+              <option value="barChart">barChart</option>
+              <option value="lineChart">lineChart</option>
+              <option value="pieChart">radarChart</option>
+            </select>
+          </div>
+          <div style="width: 300px;" class="form-group border p-3 mb-3">
+            <label for="selectLayerForAttribute">select Layer</label>
+            <select class="form-control" onchange="onChangeLayerChart(this.value)" id="selectLayerForAttribute">
+              <option value="select">select</option>
+            </select>
+          </div>
+          <div style="width: 300px;" class="form-group border p-3 mb-3">
+            <label for="selectAttributeForChart">select Attribute</label>
+            <select class="form-control" id="selectAttributeForChart">
+              <option value="select">select</option>
+            </select>
+          </div>
+        </div>
+        <!-- First Chart Container -->
+        <div class="chart-container">
+          <canvas class="pieChart" id="pieChart"></canvas>
+          <canvas class="barChart" id="barChart"></canvas>
+          <canvas class="lineChart" id="lineChart"></canvas>
+          <canvas class="radarChart" id="radarChart"></canvas>
+        </div>
+      </div>
+      <div id="table" class="content-section">
+        <div style="width: 300px;" class="form-group border p-3 mb-3">
+          <label for="selectLayerForAttribute">select Workspace</label>
+          <select class="form-control" onchange="selectLayerForAttribute(this.value)" id="selectLayerForAttribute">
+            <option value="select">select</option>
+          </select>
+        </div>
+        <!-- Table to display GIS point data -->
+        <table id="gisTable" style="width: 100%">
+          <thead>
+            <tr>
+              <!-- Placeholder for table headers -->
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Data will be populated here dynamically using JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+
+
+      <div id="geoserverSetup" class="content-section">
+        <!-- Workspace Name -->
+        <div class="border p-3 mb-3" style="display: inline-block; text-align: left;">
+          <div class="form-group">
+            <label for="workspaceName">Workspace Name</label>
+            <input type="text" value="gis" class="form-control border p-3 mb-3" id="workspaceName"
+              placeholder="Enter Workspace Name">
+          </div>
+          <!-- Button to Create Workspace -->
+          <button type="button" class="btn btn-primary" onclick="createWorkspace()" id="createWorkspaceBtn">Create
+            Workspace</button>
+        </div>
+
+        <!-- Datastore Name -->
+        <div class="border p-3 mb-3" style="display: inline-block; text-align: left;">
+          <div class="form-group">
+            <label for="datastoreName">Datastore Name</label>
+            <input type="text" value="gisStore" class="form-control border p-3 mb-3" id="datastoreName"
+              placeholder="Enter Datastore Name">
+          </div>
+          <!-- Button to Create Datastore -->
+          <button type="button" class="btn btn-primary" onclick="createDatastore()" id="createDatastoreBtn">Create
+            Datastore</button>
+        </div>
+
+        <!-- Zip File Upload -->
+        <div class="border p-3 mb-3" style="display: inline-block; padding-top: 24px !important; text-align: left;">
+          <div class="form-group">
+            <!-- Select Store Combobox -->
+            <div class="form-group">
+              <label for="selectWorkspace">select Workspace</label>
+              <select class="form-control" id="selectWorkspace">
+                <!-- Add options for selecting a store here -->
+                <option value="select">select</option>
+              </select>
+            </div>
+
+            <!-- Select Data Store Combobox -->
+            <div class="form-group">
+              <label for="selectDataStore">Select Data Store</label>
+              <select class="form-control" id="selectDataStore">
+                <!-- Add options for selecting a data store here -->
+                <option value="select">select</option>
+              </select>
+            </div>
+
+            <label for="zipFile">Choose ZIP File</label>
+            <input type="file" class="form-control-file" id="zipFile">
+          </div>
+          <!-- Button to Submit ZIP File -->
+          <button type="button" onclick="uploadFile()" class="btn btn-primary" id="submitZipBtn">Submit ZIP
+            File</button>
+        </div>
+      </div>
+      <div id="settingsContent" class="content-section" style="display: none;">
+        <!-- Settings content here -->
+        <h2>Settings Content</h2>
+        <p>This is the content for the Settings section.</p>
+      </div>
+      <div id="informationContent" class="content-section" style="display: none;">
+        <!-- Information content here -->
+        <h2>Information Content</h2>
+        <p>This is the content for the Information section.</p>
+      </div>
+    </div>
+  </div>
+  <!-- OPENLAYERS -->
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+  <script src="./js/utility.js"></script>
+  <script src="/js/resources/ol/ol.js"></script>
+  <script src="/js/resources/ol/layerswitcher.js"></script>
+  <!-- <script src="js/jquery.min.js"></script> -->
+  <script src="js/popper.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/main.js"></script>
+  <script src="./js/map.js"></script>
+  <script src="./js/resources/datatable/datatable.js"></script>
+</body>
+
+</html>
