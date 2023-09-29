@@ -406,7 +406,6 @@ function selectLayerForAttribute(selectedValue) {
         })
         .catch(error => console.log('error', error));
 };
-debugger
 let chartData = {};
 function onChangeChart(chartValue) {
     chartData.selectedChart = chartValue;

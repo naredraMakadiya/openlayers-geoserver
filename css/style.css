@@ -8333,3 +8333,18 @@ a[data-toggle="collapse"] {
 
 .subscribe-form .form-control {
   background: #4897fc; }
+
+
+#sidebar.active {
+  left: 0; 
+}
+.navbar {
+  z-index: 100;
+}
+
+.btn-nav-bar {
+  background-repeat: no-repeat;
+  width: 24px;
+  height: 24px;
+  background-position: center;
+}

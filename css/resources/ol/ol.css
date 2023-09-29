@@ -142,9 +142,10 @@
 }
 
 .ol-zoom {
-  bottom: 1px;
+  /* bottom: 1px; */
   left: 1px;
   font-size: large;
+  z-index: 999;
 }
 .ol-legend {
   z-index: 999;
