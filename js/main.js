@@ -26,7 +26,6 @@
 
 			// Add the "active" class to the clicked navigation item
 			$(this).closest('li').addClass('active');
-
 			$('.content-section').hide();
 			$('#' + targetContentId).show();
 		});

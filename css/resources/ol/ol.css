@@ -142,11 +142,17 @@
 }
 
 .ol-zoom {
-  bottom: 2.5em;
-  right: .5em;
-  font-size: x-large;
+  bottom: 1px;
+  left: 1px;
+  font-size: large;
 }
-
+.ol-legend {
+  z-index: 999;
+  bottom: 0px;
+  right: 2px;
+  cursor: pointer;
+  font-size: large;
+}
 .ol-rotate {
   top: .5em;
   right: .5em;
@@ -348,3 +354,53 @@
 .ol-overviewmap .ol-overviewmap-box:hover {
   cursor: move;
 }
+
+#legend-container {
+  position: absolute;
+  right: 2px;
+  z-index: 9999;
+  width: 300px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: white;
+  text-align: start;
+  bottom: 27px;
+  align-items: center; /* Center horizontally */
+  flex-direction: column; /* Stack child elements vertically */
+
+}
+#legend-title {
+  text-align: center;
+  margin-top: 10px; 
+}
+#legend {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+#legend-table {
+  border: 1px solid #ccc; /* Add a 1px solid gray border */
+  border-collapse: collapse; /* Optional: Collapse border spacing */
+  width: 100%; /* Ensure the table takes up the full width */
+  /* Add other CSS styles as needed */
+}
+
+#legend-table th,
+#legend-table td {
+  border: 1px solid #ccc; /* Add a 1px solid gray border to table cells */
+  padding: 5px; /* Add padding to cells for spacing */
+}
+
+
+/* Style for the legend button */
+.legend-button {
+  color: white; /* Button text color */
+  border: none;
+  cursor: pointer;
+  font-size: large;
+}
+

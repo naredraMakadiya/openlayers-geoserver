@@ -8291,6 +8291,7 @@ a[data-toggle="collapse"] {
 #content {
   width: 100%;
   padding: 0;
+  overflow: hidden;
   min-height: 100vh;
   -webkit-transition: all 0.3s;
   -o-transition: all 0.3s;

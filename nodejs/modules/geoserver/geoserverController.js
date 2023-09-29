@@ -2,6 +2,18 @@ const geoserverService = require('./geoserverService');
 const AdmZip = require('adm-zip');
 const axios = require('axios');
 const xml2js = require('xml2js');
+const os = require('os');
+const path = require('path');
+
+var shapefileDirectory;
+
+if (os.platform() === 'win64') {
+    shapefileDirectory = 'C:/xampp/tomcat/webapps/geoserver/data/data/shapefiles';
+} else {
+    shapefileDirectory = '/opt/tomcat/webapps/geoserver/data/shapefiles';
+}
+
+console.log('Shapefile directory:', shapefileDirectory);
 
 const createWorkspace = async (req, res) => {
   try {
@@ -24,8 +36,6 @@ const createDataStore = async (req, res) => {
   try {
     const workspaceName = req.body.workspace.name;
     const storeName = req.body.dataStore.name;
-    const shapefileDirectory = 'C:/xampp/tomcat/webapps/geoserver/data/data/shapefiles'; // Specify your directory here
-
     if (!workspaceName || !storeName || !shapefileDirectory) {
       return res.status(400).json({ error: 'Workspace name, data store name, and shapefile directory are required.' });
     }
@@ -42,8 +52,8 @@ const createDataStore = async (req, res) => {
 
 
 const uploadShapefile = async (req, res) => {
+  debugger
   try {
-    // Assuming the file input name is 'zipFile'
     const zipFile = req.file;
     let selectedWorkspace = req.body.selectedWorkspace;
     let selectedDataStore = req.body.selectedDataStore;
@@ -54,7 +64,7 @@ const uploadShapefile = async (req, res) => {
     }
 
     const zip = new AdmZip(zipFile.buffer);
-    const extractDir = `C:/xampp/tomcat/webapps/geoserver/data/data/shapefiles`; // Change to your desired directory
+    const extractDir = shapefileDirectory;
     const zipEntries = zip.getEntries();
     let shapefileName;
     // Extract all files from the ZIP archive to the specified directory

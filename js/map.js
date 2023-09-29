@@ -14,7 +14,9 @@ var baseMaps = new ol.layer.Group({
             title: 'OSM',
             type: 'base',
             visible: false,
-            source: new ol.source.OSM()
+            source: new ol.source.OSM({
+                attributions: [],
+            })
         }),
 
         new ol.layer.Tile({
@@ -23,6 +25,7 @@ var baseMaps = new ol.layer.Group({
             visible: false,
             source: new ol.source.XYZ({
                 url: 'http://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                attributions: [],
             }),
         }),
         new ol.layer.Tile({
@@ -30,10 +33,7 @@ var baseMaps = new ol.layer.Group({
             type: 'base',
             visible: true,
             source: new ol.source.XYZ({
-                attributions: ['Powered by Esri',
-                    'Source: Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
-                ],
-                attributionsCollapsible: false,
+                attributions: [],
                 url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
                 maxZoom: 23
             })
@@ -275,12 +275,10 @@ function getAllLayerList() {
         method: 'GET',
         redirect: 'follow'
     };
-
     fetch("http://localhost:3000/geoserver/get-layers", requestOptions)
         .then(response => response.json())
         .then(data => {
             const layersNames = data.layer.map(layers => layers.name);
-
             layersNames.forEach(layerName => {
                 const [workspace, layer] = layerName.split(':');
                 addGeoServerWMSLayer(workspace, layer);
@@ -288,21 +286,18 @@ function getAllLayerList() {
                 if (!layersByWorkspace[workspace]) {
                     layersByWorkspace[workspace] = [];
                 }
-
                 layersByWorkspace[workspace].push({ name: layer });
             });
-
             for (const workspace in layersByWorkspace) {
                 const layers = layersByWorkspace[workspace];
-
                 processLayers(workspace, layers, selectLayerForAttributeOption);
                 processLayers(workspace, layers, selectLayerForAttributeInTable);
             }
         })
         .catch(error => console.error('error', error));
-}
-
+};
 getAllLayerList();
+let isFirstLayer = true;
 function addGeoServerWMSLayer(workspace, layerName) {
     if (workspace == 'gujarat_masterdb_workspace') return;
     const geoserverWmsUrl = 'http://localhost:8080/geoserver/ows?';
@@ -312,14 +307,66 @@ function addGeoServerWMSLayer(workspace, layerName) {
             'LAYERS': `${workspace}:${layerName}`,
             'TILED': true,
         },
+
         serverType: 'geoserver',
     });
     const wmsLayer = new ol.layer.Tile({
         source: wmsSource,
-        title: layerName
+        title: layerName,
+        visible: isFirstLayer,
+
     });
+
+    if (isFirstLayer) {
+        isFirstLayer = false;
+    }
     map.addLayer(wmsLayer);
+    if (wmsLayer.getVisible()) {
+        addLegend(wmsSource, layerName);
+    }
+    wmsLayer.on('change:visible', function () {
+        const isVisible = wmsLayer.getVisible();
+        if (isVisible) {
+            addLegend(wmsSource, layerName);
+        } else {
+            removeLegend(layerName);
+        }
+    });
 };
+function addLegend(layerSource, layerName) {
+    const resolution = map.getView().getResolution();
+    updateLegend(resolution, layerSource, layerName);
+};
+function updateLegend(resolution, layerSource, layerName) {
+    const graphicUrl = layerSource.getLegendUrl(resolution);
+    const legendTable = document.getElementById('legend-table');
+    const legendRow = document.createElement('tr');
+    const titleCell = document.createElement('td');
+    titleCell.textContent = layerName;
+    titleCell.style.verticalAlign = 'top';
+    const imageCell = document.createElement('td');
+    const legendImage = document.createElement('img');
+    legendImage.src = graphicUrl;
+    imageCell.appendChild(legendImage);
+    legendRow.appendChild(titleCell);
+    legendRow.appendChild(imageCell);
+    legendTable.appendChild(legendRow);
+};
+function removeLegend(layerName) {
+    const legendTable = document.getElementById('legend-table');
+    const rows = legendTable.getElementsByTagName('tr');
+
+    // Loop through the table rows to find the one with the matching layerName
+    for (let i = 0; i < rows.length; i++) {
+        const titleCell = rows[i].getElementsByTagName('td')[0];
+        if (titleCell.textContent === layerName) {
+            // Remove the found row
+            legendTable.deleteRow(i);
+            break; // Exit the loop after removal
+        }
+    }
+};
+
 function selectLayerForAttribute(selectedValue) {
     const [workspaceName, layerName] = selectedValue.split(":");
     var myHeaders = new Headers();
@@ -334,8 +381,6 @@ function selectLayerForAttribute(selectedValue) {
         body: raw,
         redirect: 'follow'
     };
-
-
     fetch("http://localhost:3000/geoserver/get-layers-attribute", requestOptions)
         .then(response => response.text())
         .then(result => {
@@ -344,24 +389,24 @@ function selectLayerForAttribute(selectedValue) {
                 console.log("No data available.");
                 return;
             }
-            // Destroy the existing DataTable, if it exists
             if ($.fn.DataTable.isDataTable('#gisTable')) {
                 var table = $('#gisTable').DataTable();
                 table.destroy();
             }
-            // Initialize the DataTable
             $('#gisTable').empty(); // Clear the table content
             $('#gisTable').DataTable({
                 dom: 'frtip',
                 data: tableData.data.data,
-                columns: tableData.data.columns
+                columns: tableData.data.columns,
+                scrollCollapse: true,
+                scrollY: '50vh',
             });
             $('#gisTable').show();
 
         })
         .catch(error => console.log('error', error));
 };
-
+debugger
 let chartData = {};
 function onChangeChart(chartValue) {
     chartData.selectedChart = chartValue;
@@ -369,23 +414,16 @@ function onChangeChart(chartValue) {
 function onChangeLayerChart(chartLayer) {
     chartData.chartLayer = chartLayer;
     console.log(chartData)
-}
+};
 
 //pie chart logic
 var pieChartCanvas = document.getElementById("pieChart");
 var pieChartData = {
-    labels: ["Red", "Blue", "Yellow", "Total Production"],
+    labels: ["CENTRAL ZONE", "EAST ZONE", "WEST ZONE","SOUTH ZONE"],
     datasets: [{
-        data: [30, 40, 30, calculateTotalProduction()],
-        backgroundColor: ["red", "blue", "yellow", "green"], // Add color for the total production
+        data: [100, 2000, 30000,40000],
+        backgroundColor: ["red", "blue", "yellow","pink"],
     }],
-};
-function calculateTotalProduction() {
-    var redProduction = 30;
-    var blueProduction = 40;
-    var yellowProduction = 30;
-    var totalProduction = redProduction + blueProduction + yellowProduction;
-    return totalProduction;
 };
 var pieChart = new Chart(pieChartCanvas, {
     type: "pie",
@@ -396,11 +434,7 @@ var pieChart = new Chart(pieChartCanvas, {
                 label: function (tooltipItem, data) {
                     var label = data.labels[tooltipItem.index];
                     var value = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
-                    if (label === "Total Production") {
-                        return `${label}: ${value}`;
-                    } else {
-                        return `${label}: ${value}%`;
-                    }
+                    return `${label}: ${value}%`;
                 },
             },
         },
@@ -428,9 +462,8 @@ closer.onclick = function () {
     closer.blur();
     return false;
 };
-map.on('click', function (evt) {
+map.on('click', async function (evt) {
     const viewResolution = view.getResolution();
-
     const wmsLayers = map.getLayers().getArray()
         .filter(layer =>
             layer instanceof ol.layer.Tile &&
@@ -439,10 +472,10 @@ map.on('click', function (evt) {
         );
 
     let popupContent = '<div>';
+    let hasData = false; // Flag to check if any data was found
 
-    wmsLayers.forEach(wmsLayer => {
+    for (const wmsLayer of wmsLayers) {
         const wmsSource = wmsLayer.getSource();
-
         const url = wmsSource.getFeatureInfoUrl(
             evt.coordinate,
             viewResolution,
@@ -451,38 +484,53 @@ map.on('click', function (evt) {
         );
 
         if (url) {
-            fetch(url)
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.features.length > 0) {
-                        const featureProperties = data.features[0].properties;
-                        const tableName = `table_${wmsLayer.get('title').replace(/\s+/g, '_')}`;
-                        
-                        // Create a table with feature properties
-                        popupContent += `<div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">`;
-                        popupContent += `<h3>${wmsLayer.get('title')}</h3>`;
-                        popupContent += `<table id="${tableName}"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>`;
-                        
-                        for (const property in featureProperties) {
-                            popupContent += `<tr><td>${property}</td><td>${featureProperties[property]}</td></tr>`;
-                        }
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
 
-                        popupContent += '</tbody></table>';
-                        popupContent += '</div>';
+                if (data.features.length > 0) {
+                    const featureProperties = data.features[0].properties;
+                    const tableName = `table_${wmsLayer.get('title').replace(/\s+/g, '_')}`;
+                    popupContent += `<div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">`;
+                    popupContent += `<h3>${wmsLayer.get('title')}</h3>`;
+                    popupContent += `<table id="${tableName}" style="border-collapse: collapse; width: 100%;"><thead><tr style="border: 1px solid #ccc;"><th style="border: 1px solid #ccc;">Property</th><th style="border: 1px solid #ccc;">Value</th></tr></thead><tbody>`;
+                    for (const property in featureProperties) {
+                        popupContent += `<tr style="border: 1px solid #ccc;"><td style="border: 1px solid #ccc;">${property}</td><td style="border: 1px solid #ccc;">${featureProperties[property]}</td></tr>`;
                     }
-
-                    // Update the overlay content
-                    content.innerHTML = popupContent + '</div>';
-                debugger
-                    // Set the overlay position
-                    overlay.setPosition(evt.coordinate);
-                })
-                .catch((error) => {
-                    console.error(`Error fetching feature info for layer ${wmsLayer.get('title')}:`, error);
-                });
+                    popupContent += '</tbody></table>';
+                    popupContent += '</div>';
+                    hasData = true; // Data found for at least one layer
+                }
+            } catch (error) {
+                console.error(`Error fetching feature info for layer ${wmsLayer.get('title')}:`, error);
+            }
         }
-    });
+    }
+
+    popupContent += '</div>';
+    if (hasData) {
+        content.innerHTML = popupContent;
+        overlay.setPosition(evt.coordinate);
+    }
 });
 
+// Get references to the legend container and the button
+const legendContainer = document.getElementById('legend-container');
+const toggleLegendButton = document.getElementById('toggleLegendButton');
 
+// Initialize a variable to keep track of legend visibility
+let isLegendVisible = true;
 
+// Function to toggle legend visibility
+function toggleLegend() {
+    if (isLegendVisible) {
+        legendContainer.style.display = 'none';
+        isLegendVisible = false;
+    } else {
+        legendContainer.style.display = 'block';
+        isLegendVisible = true;
+    }
+}
+
+// Attach a click event listener to the button
+toggleLegendButton.addEventListener('click', toggleLegend);

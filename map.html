@@ -38,17 +38,12 @@
     #dashboardContent {
       overflow: hidden;
     }
-
-    /* Prevent scrolling within the container */
     #table {
-      max-height: 100vh;
-      /* Set a maximum height */
+      width: 100%;
+      max-width: 100%;
       overflow: hidden;
       display: none;
-      padding-left: 20px;
-      /* Add left padding */
       padding-top: 50px;
-      /* Add top padding */
     }
 
     #geoserverSetup {
@@ -81,22 +76,30 @@
         <li>
           <a href="#" data-content="geoserverSetup"><span class="fa fa-sticky-note mr-3"></span> Geoserver Setup</a>
         </li>
-        <li>
+        <!-- <li>
           <a href="#" data-content="settingsContent"><span class="fa fa-paper-plane mr-3"></span> Settings</a>
         </li>
         <li>
           <a href="#" data-content="informationContent"><span class="fa fa-paper-plane mr-3"></span> Information</a>
-        </li>
+        </li> -->
       </ul>
     </nav>
     <!-- Page Content  -->
     <div id="content">
-      
       <div id="mapContent" style="width: 100%; height: 100%; padding: 0; min-height: 100vh;" class="content-section">
+        <div class="ol-legend ol-unselectable ol-control">
+            <button id="toggleLegendButton" class="ol-legend">L</button>
+        </div>
         <div id="popup" class="ol-popup">
           <a href="#" id="popup-closer" class="ol-popup-closer"></a>
           <div id="popup-content"></div>
         </div>
+        <div id="legend-container">
+          <div id="legend-title">Legends</div>
+          <table id="legend-table"></table>
+      </div>
+      
+      
       </div>
       <div id="dashboardContent"
         style="display: none; width: 100%; height: 100vh; padding: 0; max-height: 100%; min-height: 100%;"
@@ -119,7 +122,13 @@
             </select>
           </div>
           <div style="width: 300px;" class="form-group border p-3 mb-3">
-            <label for="selectAttributeForChart">select Attribute</label>
+            <label for="selectAttributeForChart">select Attribute For Label</label>
+            <select class="form-control" id="selectAttributeForChart">
+              <option value="select">select</option>
+            </select>
+          </div>
+          <div style="width: 300px;" class="form-group border p-3 mb-3">
+            <label for="selectAttributeForChart">select Attribute For Data</label>
             <select class="form-control" id="selectAttributeForChart">
               <option value="select">select</option>
             </select>
@@ -135,63 +144,74 @@
       </div>
       <div id="table" class="content-section">
         <div style="width: 300px;" class="form-group border p-3 mb-3">
-          <label for="selectLayerForAttributeInTable">select Layer</label>
+          <label for="selectLayerForAttributeInTable">Select Layer</label>
           <select class="form-control" onchange="selectLayerForAttribute(this.value)" id="selectLayerForAttributeInTable">
-            <option value="select">select</option>
+            <option value="select">Select</option>
           </select>
         </div>
-        <!-- Table to display GIS point data -->
-        <table id="gisTable" style="width: 100%">
+        <table id="gisTable" class="row-border" style="width:100%"> <!-- Set your desired width and height -->
           <thead>
             <tr>
-              <!-- Placeholder for table headers -->
+              <!-- Add table header content here -->
             </tr>
           </thead>
           <tbody>
-            <!-- Data will be populated here dynamically using JavaScript -->
+            <!-- Add table body content here -->
           </tbody>
         </table>
       </div>
-
-
-
+      
       <div id="geoserverSetup" class="content-section">
-        <!-- Workspace Name -->
-        <div class="border p-3 mb-3" style="display: inline-block; text-align: left;">
-          <div class="form-group">
-            <label for="workspaceName">Workspace Name</label>
-            <input type="text" value="gis" class="form-control border p-3 mb-3" id="workspaceName"
-              placeholder="Enter Workspace Name">
+        <!-- Create Geoserver Workspace and Datastore -->
+        <div class="container">
+          <div class="row">
+            <!-- Create Geoserver Workspace -->
+            <div class="col-md-6">
+              <h3>Create Geoserver Workspace</h3>
+              <div class="border p-3 mb-3" style="text-align: left;">
+                <!-- Workspace Name -->
+                <div class="form-group">
+                  <label for="workspaceName">Workspace Name</label>
+                  <input type="text" value="gis" class="form-control border p-3 mb-3" id="workspaceName"
+                    placeholder="Enter Workspace Name">
+                </div>
+                <!-- Button to Create Workspace -->
+                <button type="button" class="btn btn-primary" onclick="createWorkspace()" id="createWorkspaceBtn">Create
+                  Workspace</button>
+              </div>
+            </div>
+        
+            <!-- Create Geoserver Datastore -->
+            <div class="col-md-6">
+              <h3>Create Geoserver Datastore</h3>
+              <div class="border p-3 mb-3" style="text-align: left;">
+                <!-- Datastore Name -->
+                <div class="form-group">
+                  <label for="datastoreName">Datastore Name</label>
+                  <input type="text" value="gisStore" class="form-control border p-3 mb-3" id="datastoreName"
+                    placeholder="Enter Datastore Name">
+                </div>
+                <!-- Button to Create Datastore -->
+                <button type="button" class="btn btn-primary" onclick="createDatastore()" id="createDatastoreBtn">Create
+                  Datastore</button>
+              </div>
+            </div>
           </div>
-          <!-- Button to Create Workspace -->
-          <button type="button" class="btn btn-primary" onclick="createWorkspace()" id="createWorkspaceBtn">Create
-            Workspace</button>
         </div>
-
-        <!-- Datastore Name -->
-        <div class="border p-3 mb-3" style="display: inline-block; text-align: left;">
+      
+        <!-- Upload Data -->
+        <div class="border p-3 mb-3 col-md-4" style="text-align: left; width: 300px; margin-left: 39px;">
           <div class="form-group">
-            <label for="datastoreName">Datastore Name</label>
-            <input type="text" value="gisStore" class="form-control border p-3 mb-3" id="datastoreName"
-              placeholder="Enter Datastore Name">
-          </div>
-          <!-- Button to Create Datastore -->
-          <button type="button" class="btn btn-primary" onclick="createDatastore()" id="createDatastoreBtn">Create
-            Datastore</button>
-        </div>
-
-        <!-- Zip File Upload -->
-        <div class="border p-3 mb-3" style="display: inline-block; padding-top: 24px !important; text-align: left;">
-          <div class="form-group">
-            <!-- Select Store Combobox -->
+            <h3>Upload Data</h3>
+            <!-- Select Workspace Combobox -->
             <div class="form-group">
-              <label for="selectWorkspace">select Workspace</label>
+              <label for="selectWorkspace">Select Workspace</label>
               <select class="form-control" id="selectWorkspace">
                 <!-- Add options for selecting a store here -->
                 <option value="select">select</option>
               </select>
             </div>
-
+      
             <!-- Select Data Store Combobox -->
             <div class="form-group">
               <label for="selectDataStore">Select Data Store</label>
@@ -200,13 +220,12 @@
                 <option value="select">select</option>
               </select>
             </div>
-
+      
             <label for="zipFile">Choose ZIP File</label>
             <input type="file" class="form-control-file" id="zipFile">
           </div>
           <!-- Button to Submit ZIP File -->
-          <button type="button" onclick="uploadFile()" class="btn btn-primary" id="submitZipBtn">Submit ZIP
-            File</button>
+          <button type="button" onclick="uploadFile()" class="btn btn-primary" id="submitZipBtn">Submit ZIP File</button>
         </div>
       </div>
       <div id="settingsContent" class="content-section" style="display: none;">
