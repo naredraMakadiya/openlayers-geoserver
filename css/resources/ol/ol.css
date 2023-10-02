@@ -367,7 +367,7 @@
   border-radius: 10px;
   background-color: white;
   text-align: start;
-  bottom: 27px;
+  bottom: 0px;
   align-items: center; /* Center horizontally */
   flex-direction: column; /* Stack child elements vertically */
 
